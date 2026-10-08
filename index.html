@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimalist Store</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome for minimal icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        minimal: {
+                            bg: '#FAFAFA',
+                            card: '#F4F4F5',
+                            dark: '#18181B',
+                            muted: '#71717A',
+                            border: '#E4E4E7'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom smooth scroll and minimalist scrollbar */
+        html {
+            scroll-behavior: smooth;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #FAFAFA;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D4D4D8;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #A1A1AA;
+        }
+    </style>
+</head>
+<body class="bg-minimal-bg text-minimal-dark font-sans antialiased min-h-screen flex flex-col selection:bg-minimal-dark selection:text-white">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-minimal-border transition-all">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-8">
+                <a href="#" class="text-xl font-semibold tracking-tight uppercase">ESSENCE.</a>
+                <nav class="hidden md:flex space-x-6 text-sm font-medium text-minimal-muted">
+                    <button onclick="filterCategory('All')" class="hover:text-minimal-dark transition-colors nav-link active-link" data-cat="All">All Items</button>
+                    <button onclick="filterCategory('Apparel')" class="hover:text-minimal-dark transition-colors nav-link" data-cat="Apparel">Apparel</button>
+                    <button onclick="filterCategory('Accessories')" class="hover:text-minimal-dark transition-colors nav-link" data-cat="Accessories">Accessories</button>
+                    <button onclick="filterCategory('Objects')" class="hover:text-minimal-dark transition-colors nav-link" data-cat="Objects">Objects</button>
+                </nav>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="relative hidden sm:block">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-minimal-muted">
+                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    </span>
+                    <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search products..." 
+                        class="pl-9 pr-4 py-2 bg-minimal-card border border-transparent rounded-full text-xs focus:bg-white focus:border-minimal-dark focus:outline-none w-48 lg:w-64 transition-all">
+                </div>
+                
+                <button onclick="toggleCartDrawer(true)" class="relative p-2 text-minimal-dark hover:opacity-70 transition-opacity" aria-label="Shopping Cart">
+                    <i class="fa-solid fa-bag-shopping text-lg"></i>
+                    <span id="cartBadge" class="absolute top-1 right-1 bg-minimal-dark text-white text-[10px] font-medium w-4 h-4 rounded-full flex items-center justify-center scale-0 transition-transform duration-200">0</span>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Navigation bar -->
+        <div class="md:hidden flex overflow-x-auto px-4 py-2 border-t border-minimal-border space-x-6 text-xs font-medium text-minimal-muted no-scrollbar bg-white">
+            <button onclick="filterCategory('All')" class="whitespace-nowrap hover:text-minimal-dark transition-colors">All Items</button>
+            <button onclick="filterCategory('Apparel')" class="whitespace-nowrap hover:text-minimal-dark transition-colors">Apparel</button>
+            <button onclick="filterCategory('Accessories')" class="whitespace-nowrap hover:text-minimal-dark transition-colors">Accessories</button>
+            <button onclick="filterCategory('Objects')" class="whitespace-nowrap hover:text-minimal-dark transition-colors">Objects</button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+        <!-- Hero intro banner -->
+        <div class="mb-12 text-center max-w-2xl mx-auto">
+            <span class="text-xs font-semibold uppercase tracking-widest text-minimal-muted mb-3 inline-block">Curated Collection</span>
+            <h1 class="text-3xl sm:text-4xl font-light tracking-tight mb-4">Form follows function.</h1>
+            <p class="text-sm text-minimal-muted font-light leading-relaxed">Explore thoughtfully designed objects, minimalist apparel, and refined accessories crafted for everyday living.</p>
+        </div>
+
+        <!-- Search bar for mobile -->
+        <div class="sm:hidden mb-8">
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-minimal-muted">
+                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                </span>
+                <input type="text" id="mobileSearchInput" oninput="handleSearch()" placeholder="Search products..." 
+                    class="w-full pl-9 pr-4 py-2.5 bg-white border border-minimal-border rounded-full text-xs focus:border-minimal-dark focus:outline-none transition-all">
+            </div>
+        </div>
+
+        <!-- Filters & Count Header -->
+        <div class="flex items-center justify-between mb-8 pb-4 border-b border-minimal-border">
+            <div class="text-xs text-minimal-muted" id="productCount">Showing all items</div>
+            <div class="flex items-center space-x-2 text-xs">
+                <span class="text-minimal-muted">Sort by:</span>
+                <select id="sortSelect" onchange="handleSort()" class="bg-transparent font-medium text-minimal-dark focus:outline-none cursor-pointer">
+                    <option value="featured">Featured</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="name">Name</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Product Grid -->
+        <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+            <!-- Dynamically populated products -->
+        </div>
+
+        <!-- Empty state -->
+        <div id="emptyState" class="hidden text-center py-24">
+            <i class="fa-regular fa-folder-open text-4xl text-minimal-muted mb-4"></i>
+            <h3 class="text-lg font-medium mb-1">No products found</h3>
+            <p class="text-xs text-minimal-muted">Try adjusting your search or category filter.</p>
+        </div>
+    </main>
+
+    <!-- Product Detail Modal -->
+    <div id="productModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col md:flex-row max-h-[90vh]">
+            <!-- Modal Image -->
+            <div class="md:w-1/2 bg-minimal-card relative h-64 md:h-auto flex items-center justify-center p-8 overflow-hidden">
+                <img id="modalImage" src="" alt="Product" class="object-cover w-full h-full rounded-lg max-h-[400px]">
+                <button onclick="closeProductModal()" class="md:hidden absolute top-4 right-4 bg-white/80 hover:bg-white text-minimal-dark w-8 h-8 rounded-full flex items-center justify-center shadow-sm">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+            <!-- Modal Details -->
+            <div class="md:w-1/2 p-6 sm:p-8 flex flex-col justify-between overflow-y-auto">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span id="modalCategory" class="text-[10px] uppercase font-semibold tracking-widest text-minimal-muted">Category</span>
+                        <button onclick="closeProductModal()" class="hidden md:flex text-minimal-muted hover:text-minimal-dark transition-colors">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
+                    <h2 id="modalTitle" class="text-xl sm:text-2xl font-normal tracking-tight mb-3">Product Name</h2>
+                    <div id="modalPrice" class="text-base font-medium mb-4">$0.00</div>
+                    <p id="modalDescription" class="text-xs text-minimal-muted leading-relaxed mb-6 font-light">Product description goes here.</p>
+                    
+                    <!-- Options selection if any -->
+                    <div class="mb-6">
+                        <label class="block text-xs font-medium text-minimal-dark mb-2">Select Size / Variant</label>
+                        <div id="modalVariants" class="flex flex-wrap gap-2">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3 pt-4 border-t border-minimal-border">
+                    <button onclick="addModalProductToCart()" class="w-full bg-minimal-dark text-white py-3 px-6 rounded-full text-xs font-medium hover:bg-black transition-colors flex items-center justify-center space-x-2">
+                        <span>Add to Bag</span>
+                        <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Drawer Backdrop -->
+    <div id="cartBackdrop" onclick="toggleCartDrawer(false)" class="fixed inset-0 z-50 bg-black/30 backdrop-blur-xs opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+    <!-- Cart Drawer -->
+    <div id="cartDrawer" class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+        <!-- Cart Header -->
+        <div class="p-6 border-b border-minimal-border flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <h3 class="text-base font-medium">Your Bag</h3>
+                <span id="cartCountHeader" class="text-xs text-minimal-muted">(0)</span>
+            </div>
+            <button onclick="toggleCartDrawer(false)" class="text-minimal-muted hover:text-minimal-dark p-2 transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Cart Items List -->
+        <div id="cartItemsList" class="flex-grow overflow-y-auto p-6 space-y-6 divide-y divide-minimal-border/60">
+            <!-- Populated dynamically -->
+        </div>
+
+        <!-- Cart Empty State -->
+        <div id="cartEmptyState" class="hidden flex-grow flex flex-col items-center justify-center p-8 text-center">
+            <i class="fa-bag-shopping text-3xl text-minimal-muted mb-3 font-light"></i>
+            <p class="text-sm font-medium mb-1">Your bag is empty</p>
+            <p class="text-xs text-minimal-muted mb-6">Discover our collection and add items to your bag.</p>
+            <button onclick="toggleCartDrawer(false)" class="bg-minimal-dark text-white px-6 py-2.5 rounded-full text-xs font-medium hover:bg-black transition-colors">Start Shopping</button>
+        </div>
+
+        <!-- Cart Footer -->
+        <div id="cartFooter" class="p-6 border-t border-minimal-border bg-minimal-bg">
+            <div class="space-y-2 mb-4">
+                <div class="flex justify-between text-xs text-minimal-muted">
+                    <span>Subtotal</span>
+                    <span id="cartSubtotal" class="font-medium text-minimal-dark">$0.00</span>
+                </div>
+                <div class="flex justify-between text-xs text-minimal-muted">
+                    <span>Shipping</span>
+                    <span>Calculated at checkout</span>
+                </div>
+                <div class="flex justify-between text-sm font-medium pt-2 border-t border-minimal-border">
+                    <span>Estimated Total</span>
+                    <span id="cartTotal">$0.00</span>
+                </div>
+            </div>
+            <button onclick="openCheckoutModal()" class="w-full bg-minimal-dark text-white py-3.5 rounded-full text-xs font-medium hover:bg-black transition-colors flex items-center justify-center space-x-2">
+                <span>Proceed to Checkout</span>
+                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Checkout Simulation Modal -->
+    <div id="checkoutModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl transform scale-95 transition-transform duration-300 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-medium tracking-tight">Secure Checkout</h3>
+                <button onclick="closeCheckoutModal()" class="text-minimal-muted hover:text-minimal-dark">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="checkoutForm" onsubmit="handleCheckoutSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-minimal-dark mb-1">Full Name</label>
+                    <input type="text" required placeholder="Alex Morgan" class="w-full px-3 py-2 bg-minimal-card border border-transparent rounded-lg text-xs focus:bg-white focus:border-minimal-dark focus:outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-minimal-dark mb-1">Email Address</label>
+                    <input type="email" required placeholder="alex@example.com" class="w-full px-3 py-2 bg-minimal-card border border-transparent rounded-lg text-xs focus:bg-white focus:border-minimal-dark focus:outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-minimal-dark mb-1">Shipping Address</label>
+                    <input type="text" required placeholder="123 Minimalist St, Suite 4B" class="w-full px-3 py-2 bg-minimal-card border border-transparent rounded-lg text-xs focus:bg-white focus:border-minimal-dark focus:outline-none transition-all">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-minimal-dark mb-1">City</label>
+                        <input type="text" required placeholder="San Francisco" class="w-full px-3 py-2 bg-minimal-card border border-transparent rounded-lg text-xs focus:bg-white focus:border-minimal-dark focus:outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-minimal-dark mb-1">Postal Code</label>
+                        <input type="text" required placeholder="94107" class="w-full px-3 py-2 bg-minimal-card border border-transparent rounded-lg text-xs focus:bg-white focus:border-minimal-dark focus:outline-none transition-all">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-minimal-dark mb-1">Card Details (Simulation)</label>
+                    <div class="relative">
+                        <input type="text" required placeholder="4242 •••• •••• 4242" class="w-full px-3 py-2 pl-9 bg-minimal-card border border-transparent rounded-lg text-xs focus:bg-white focus:border-minimal-dark focus:outline-none transition-all">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-minimal-muted">
+                            <i class="fa-regular fa-credit-card text-xs"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-minimal-border flex items-center justify-between text-xs">
+                    <span class="text-minimal-muted">Total amount due:</span>
+                    <span id="checkoutModalTotal" class="font-semibold text-sm text-minimal-dark">$0.00</span>
+                </div>
+
+                <button type="submit" class="w-full bg-minimal-dark text-white py-3.5 rounded-full text-xs font-medium hover:bg-black transition-colors mt-2">
+                    Complete Order
+                </button>
+            </form>
+
+            <!-- Success State inside checkout modal -->
+            <div id="checkoutSuccessState" class="hidden text-center py-8">
+                <div class="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-check text-lg"></i>
+                </div>
+                <h4 class="text-base font-medium mb-1">Order Confirmed</h4>
+                <p class="text-xs text-minimal-muted mb-6">Thank you for your purchase. A confirmation email has been dispatched.</p>
+                <button onclick="closeCheckoutModalCompletely()" class="bg-minimal-dark text-white px-6 py-2.5 rounded-full text-xs font-medium hover:bg-black transition-colors">Continue Shopping</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-minimal-dark text-white px-5 py-3 rounded-full text-xs font-medium shadow-lg translate-y-16 opacity-0 transition-all duration-300 z-50 flex items-center space-x-2">
+        <i class="fa-solid fa-circle-check text-green-400"></i>
+        <span id="toastMessage">Item added to bag</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-minimal-border mt-20 py-12 text-xs text-minimal-muted">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
+            <div>&copy; 2026 ESSENCE. All rights reserved.</div>
+            <div class="flex space-x-6">
+                <a href="#" class="hover:text-minimal-dark transition-colors">Privacy Policy</a>
+                <a href="#" class="hover:text-minimal-dark transition-colors">Terms of Service</a>
+                <a href="#" class="hover:text-minimal-dark transition-colors">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Application JavaScript -->
+    <script>
+        // Product Catalog Data
+        const products = [
+            {
+                id: 1,
+                name: "Merino Wool Crewneck",
+                category: "Apparel",
+                price: 145.00,
+                rating: 4.8,
+                image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=800",
+                description: "Knitted from ultra-fine Australian merino wool for superior warmth and breathability. Designed with a relaxed silhouette and ribbed trims.",
+                variants: ["S", "M", "L", "XL"]
+            },
+            {
+                id: 2,
+                name: "Minimalist Ceramic Lamp",
+                category: "Objects",
+                price: 210.00,
+                rating: 4.9,
+                image: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&q=80&w=800",
+                description: "Hand-thrown matte ceramic silhouette emitting a warm, diffused ambient glow. Ideal for bedside tables or subtle workspaces.",
+                variants: ["Standard", "Tall"]
+            },
+            {
+                id: 3,
+                name: "Brushed Titanium Timepiece",
+                category: "Accessories",
+                price: 320.00,
+                rating: 4.7,
+                image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800",
+                description: "Precision quartz movement housed in a featherweight brushed titanium case. Completed with an interchangeable vegetable-tanned leather strap.",
+                variants: ["Black / Tan", "Silver / Black"]
+            },
+            {
+                id: 4,
+                name: "Heavyweight Cotton Tee",
+                category: "Apparel",
+                price: 65.00,
+                rating: 4.6,
+                image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&q=80&w=800",
+                description: "Crafted from 280gsm organic carded cotton. Structured boxy cut that maintains its shape wash after wash.",
+                variants: ["XS", "S", "M", "L", "XL"]
+            },
+            {
+                id: 5,
+                name: "Walnut Desk Organizer",
+                category: "Objects",
+                price: 85.00,
+                rating: 4.8,
+                image: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800",
+                description: "Milled from solid American walnut with integrated magnetic slots for stationery, mobile devices, and everyday essentials.",
+                variants: ["Walnut", "Oak"]
+            },
+            {
+                id: 6,
+                name: "Canvas Utility Tote",
+                category: "Accessories",
+                price: 110.00,
+                rating: 4.5,
+                image: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800",
+                description: "Heavy-duty 24oz water-resistant cotton canvas reinforced with bridle leather handles and brass riveted stress points.",
+                variants: ["Natural", "Charcoal"]
+            },
+            {
+                id: 7,
+                name: "Pleated Linen Trousers",
+                category: "Apparel",
+                price: 180.00,
+                rating: 4.7,
+                image: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&q=80&w=800",
+                description: "Breathable European flax linen tailored with a single front pleat and adjustable side tabs for effortless summer styling.",
+                variants: ["30", "32", "34", "36"]
+            },
+            {
+                id: 8,
+                name: "Mouth-Blown Carafe Set",
+                category: "Objects",
+                price: 95.00,
+                rating: 4.9,
+                image: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&q=80&w=800",
+                description: "Artisan crafted borosilicate glassware featuring clean geometric lines and a stackable tumbler lid.",
+                variants: ["Clear", "Smoke Grey"]
+            }
+        ];
+
+        // State Management
+        let cart = [];
+        let currentCategory = 'All';
+        let searchQuery = '';
+        let currentSort = 'featured';
+        let selectedProduct = null;
+        let selectedVariant = '';
+
+        // Initialize application
+        window.addEventListener('DOMContentLoaded', () => {
+            renderProducts();
+            updateCartUI();
+        });
+
+        // Filter by category
+        function filterCategory(category) {
+            currentCategory = category;
+            
+            // Update active state on nav buttons
+            document.querySelectorAll('.nav-link').forEach(btn => {
+                if(btn.dataset.cat === category) {
+                    btn.classList.add('text-minimal-dark', 'font-semibold');
+                    btn.classList.remove('text-minimal-muted');
+                } else {
+                    btn.classList.remove('text-minimal-dark', 'font-semibold');
+                    btn.classList.add('text-minimal-muted');
+                }
+            });
+
+            renderProducts();
+        }
+
+        // Handle Search input
+        function handleSearch() {
+            const val1 = document.getElementById('searchInput').value;
+            const val2 = document.getElementById('mobileSearchInput').value;
+            searchQuery = (val1 || val2).toLowerCase().trim();
+            renderProducts();
+        }
+
+        // Handle Sort change
+        function handleSort() {
+            currentSort = document.getElementById('sortSelect').value;
+            renderProducts();
+        }
+
+        // Render products grid
+        function renderProducts() {
+            const grid = document.getElementById('productGrid');
+            const emptyState = document.getElementById('emptyState');
+            const productCount = document.getElementById('productCount');
+
+            // Filter
+            let filtered = products.filter(p => {
+                const matchesCat = currentCategory === 'All' || p.category === currentCategory;
+                const matchesSearch = p.name.toLowerCase().includes(searchQuery) || p.description.toLowerCase().includes(searchQuery);
+                return matchesCat && matchesSearch;
+            });
+
+            // Sort
+            if (filtered.length > 0) {
+                if (currentSort === 'price-low') {
+                    filtered.sort((a, b) => a.price - b.price);
+                } else if (currentSort === 'price-high') {
+                    filtered.sort((a, b) => b.price - a.price);
+                } else if (currentSort === 'name') {
+                    filtered.sort((a, b) => a.name.localeCompare(b.name));
+                }
+            }
+
+            // Count display
+            productCount.textContent = `Showing ${filtered.length} item${filtered.length === 1 ? '' : 's'}`;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            grid.innerHTML = filtered.map(product => `
+                <div class="group cursor-pointer flex flex-col" onclick="openProductModal(${product.id})">
+                    <div class="relative bg-minimal-card rounded-xl overflow-hidden aspect-square mb-4">
+                        <img src="${product.image}" alt="${product.name}" onerror="this.src='https://placehold.co/600x600/F4F4F5/71717A?text=Essence'" class="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500">
+                        <div class="absolute top-3 right-3 bg-white/80 backdrop-blur-xs px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider text-minimal-dark">
+                            ${product.category}
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-start mb-1">
+                        <h3 class="text-sm font-medium tracking-tight text-minimal-dark group-hover:underline">${product.name}</h3>
+                        <span class="text-sm font-medium text-minimal-dark">$${product.price.toFixed(2)}</span>
+                    </div>
+                    <p class="text-xs text-minimal-muted font-light line-clamp-1 mb-3">${product.description}</p>
+                    <button onclick="event.stopPropagation(); quickAddToCart(${product.id})" class="mt-auto w-full bg-minimal-card group-hover:bg-minimal-dark group-hover:text-white py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center space-x-2">
+                        <span>Quick Add</span>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Modal functions
+        function openProductModal(id) {
+            selectedProduct = products.find(p => p.id === id);
+            if (!selectedProduct) return;
+
+            selectedVariant = selectedProduct.variants[0];
+
+            document.getElementById('modalImage').src = selectedProduct.image;
+            document.getElementById('modalCategory').textContent = selectedProduct.category;
+            document.getElementById('modalTitle').textContent = selectedProduct.name;
+            document.getElementById('modalPrice').textContent = `$${selectedProduct.price.toFixed(2)}`;
+            document.getElementById('modalDescription').textContent = selectedProduct.description;
+
+            // Render variants
+            const variantsContainer = document.getElementById('modalVariants');
+            variantsContainer.innerHTML = selectedProduct.variants.map((variant, idx) => `
+                <button onclick="selectVariant('${variant}')" id="variant-${variant}" class="px-3.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${idx === 0 ? 'border-minimal-dark bg-minimal-dark text-white' : 'border-minimal-border text-minimal-dark hover:border-minimal-muted'}">
+                    ${variant}
+                </button>
+            `).join('');
+
+            const modal = document.getElementById('productModal');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.querySelector('div > div').classList.remove('scale-95');
+        }
+
+        function selectVariant(variant) {
+            selectedVariant = variant;
+            selectedProduct.variants.forEach(v => {
+                const btn = document.getElementById(`variant-${v}`);
+                if (v === variant) {
+                    btn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-medium border border-minimal-dark bg-minimal-dark text-white transition-all';
+                } else {
+                    btn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-medium border border-minimal-border text-minimal-dark hover:border-minimal-muted transition-all';
+                }
+            });
+        }
+
+        function closeProductModal() {
+            const modal = document.getElementById('productModal');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modal.querySelector('div > div').classList.add('scale-95');
+        }
+
+        function addModalProductToCart() {
+            if (!selectedProduct) return;
+            addToCart(selectedProduct.id, selectedVariant);
+            closeProductModal();
+        }
+
+        function quickAddToCart(id) {
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            addToCart(id, product.variants[0]);
+        }
+
+        // Cart state logic
+        function addToCart(productId, variant) {
+            const product = products.find(p => p.id === productId);
+            const existingIndex = cart.findIndex(item => item.id === productId && item.variant === variant);
+
+            if (existingIndex > -1) {
+                cart[existingIndex].quantity += 1;
+            } else {
+                cart.push({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    image: product.image,
+                    variant: variant,
+                    quantity: 1
+                });
+            }
+
+            updateCartUI();
+            toggleCartDrawer(true);
+            showToast(`Added ${product.name} to bag`);
+        }
+
+        function updateQuantity(productId, variant, delta) {
+            const itemIndex = cart.findIndex(item => item.id === productId && item.variant === variant);
+            if (itemIndex > -1) {
+                cart[itemIndex].quantity += delta;
+                if (cart[itemIndex].quantity <= 0) {
+                    cart.splice(itemIndex, 1);
+                }
+            }
+            updateCartUI();
+        }
+
+        function removeFromCart(productId, variant) {
+            cart = cart.filter(item => !(item.id === productId && item.variant === variant));
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const cartBadge = document.getElementById('cartBadge');
+            const cartCountHeader = document.getElementById('cartCountHeader');
+            const cartItemsList = document.getElementById('cartItemsList');
+            const cartEmptyState = document.getElementById('cartEmptyState');
+            const cartFooter = document.getElementById('cartFooter');
+            const cartSubtotal = document.getElementById('cartSubtotal');
+            const cartTotal = document.getElementById('cartTotal');
+
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            const subtotalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+            // Badge updates
+            if (totalItems > 0) {
+                cartBadge.textContent = totalItems;
+                cartBadge.classList.remove('scale-0');
+            } else {
+                cartBadge.classList.add('scale-0');
+            }
+
+            cartCountHeader.textContent = `(${totalItems})`;
+
+            if (cart.length === 0) {
+                cartItemsList.classList.add('hidden');
+                cartEmptyState.classList.remove('hidden');
+                cartFooter.classList.add('hidden');
+                return;
+            }
+
+            cartItemsList.classList.remove('hidden');
+            cartEmptyState.classList.add('hidden');
+            cartFooter.classList.remove('hidden');
+
+            cartItemsList.innerHTML = cart.map(item => `
+                <div class="flex items-center space-x-4 pt-4 first:pt-0">
+                    <div class="w-16 h-16 bg-minimal-card rounded-lg overflow-hidden flex-shrink-0">
+                        <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-grow">
+                        <h4 class="text-xs font-medium text-minimal-dark">${item.name}</h4>
+                        <div class="text-[10px] text-minimal-muted mb-1">Variant: ${item.variant}</div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center border border-minimal-border rounded-md overflow-hidden">
+                                <button onclick="updateQuantity(${item.id}, '${item.variant}', -1)" class="px-2 py-0.5 text-xs text-minimal-muted hover:bg-minimal-card transition-colors">-</button>
+                                <span class="px-2.5 text-xs font-medium">${item.quantity}</span>
+                                <button onclick="updateQuantity(${item.id}, '${item.variant}', 1)" class="px-2 py-0.5 text-xs text-minimal-muted hover:bg-minimal-card transition-colors">+</button>
+                            </div>
+                            <span class="text-xs font-medium">$${(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <button onclick="removeFromCart(${item.id}, '${item.variant}')" class="text-minimal-muted hover:text-minimal-dark p-1 transition-colors">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                </div>
+            `).join('');
+
+            cartSubtotal.textContent = `$${subtotalAmount.toFixed(2)}`;
+            cartTotal.textContent = `$${subtotalAmount.toFixed(2)}`;
+        }
+
+        // Toggle cart drawer
+        function toggleCartDrawer(open) {
+            const drawer = document.getElementById('cartDrawer');
+            const backdrop = document.getElementById('cartBackdrop');
+
+            if (open) {
+                drawer.classList.remove('translate-x-full');
+                backdrop.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                drawer.classList.add('translate-x-full');
+                backdrop.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        // Checkout flow
+        function openCheckoutModal() {
+            if (cart.length === 0) return;
+            toggleCartDrawer(false);
+
+            const subtotalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            document.getElementById('checkoutModalTotal').textContent = `$${subtotalAmount.toFixed(2)}`;
+            
+            // Reset form states
+            document.getElementById('checkoutForm').reset();
+            document.getElementById('checkoutForm').classList.remove('hidden');
+            document.getElementById('checkoutSuccessState').classList.add('hidden');
+
+            const modal = document.getElementById('checkoutModal');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.querySelector('div > div').classList.remove('scale-95');
+        }
+
+        function closeCheckoutModal() {
+            const modal = document.getElementById('checkoutModal');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modal.querySelector('div > div').classList.add('scale-95');
+        }
+
+        function handleCheckoutSubmit(e) {
+            e.preventDefault();
+            
+            // Hide form and show success state
+            document.getElementById('checkoutForm').classList.add('hidden');
+            document.getElementById('checkoutSuccessState').classList.remove('hidden');
+
+            // Clear cart
+            cart = [];
+            updateCartUI();
+        }
+
+        function closeCheckoutModalCompletely() {
+            closeCheckoutModal();
+        }
+
+        // Notification Toast
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = message;
+            
+            toast.classList.remove('translate-y-16', 'opacity-0');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-16', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
